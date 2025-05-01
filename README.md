@@ -27,8 +27,8 @@ This application aims to streamline the mentor-mentee matching process. It provi
 *   **Database Integration:** Integration with a database (likely SQL) to persistently store user profiles, mentor details, and session information.
 *   **Database Handling:** Classes to manage the interaction between the application and the database.
 
-**Development Environment Setup:**
-
+## Development Environment Setup
+    
 1.  **Install Java:** Ensure you have the Java Development Kit (JDK) installed on your system.
 2.  **Install a Database:** Set up a database server (e.g., MySQL, PostgreSQL) and create a database for the application.
 3. **IntelliJ IDEA:** This project is structured for IntelliJ IDEA. Install IntelliJ IDEA if you plan on making changes to this project.
@@ -39,3 +39,15 @@ This application aims to streamline the mentor-mentee matching process. It provi
 1.  Ensure the database server is running.
 2.  Compile the Java source code.
 3.  Run the main application class (e.g., using `java Main`).
+
+## Future Scope and Potential Improvements
+
+The Mentor Matching application has significant potential for future growth and enhancement. Here are some ideas for potential improvements:
+
+*   **Real-Time Chat:** Implement a real-time chat feature to allow mentors and students to communicate directly within the application.
+*   **Improved Search Algorithm:** Enhance the search algorithm to provide more accurate and relevant mentor recommendations based on student preferences and needs.
+*   **User Ratings and Reviews:** Add a system for users to rate and review their mentors, helping to build trust and improve the quality of mentorship.
+*   **AI for Smart Matching:** Incorporate AI to analyze user profiles and suggest the best mentor-student matches based on skills, interests, and goals.
+*   **Notifications:** Implement a notification system to alert users about new sessions, messages, and other important updates.
+*   **Resource Library:** Create a resource library with helpful articles, videos, and tools for both mentors and students.
+*   **Calendar Integration:** Integrate with user calendars to make scheduling and managing sessions easier.
