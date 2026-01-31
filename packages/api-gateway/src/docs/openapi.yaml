@@ -1,0 +1,924 @@
+openapi: 3.0.3
+info:
+  title: Mentor Matching Platform API
+  description: |
+    A comprehensive API for the mentor matching platform that connects mentors and students through session-based mentoring.
+    
+    ## Authentication
+    Most endpoints require authentication using JWT tokens. Include the token in the Authorization header:
+    ```
+    Authorization: Bearer <your-jwt-token>
+    ```
+    
+    ## Rate Limiting
+    API requests are rate limited:
+    - General endpoints: 100 requests per 15 minutes
+    - Authentication endpoints: 5 requests per 15 minutes
+    
+    ## Error Handling
+    All errors follow a consistent format:
+    ```json
+    {
+      "success": false,
+      "error": {
+        "code": "ERROR_CODE",
+        "message": "Human readable error message"
+      },
+      "timestamp": "2024-01-01T00:00:00.000Z"
+    }
+    ```
+  version: 1.0.0
+  contact:
+    name: Mentor Platform API Support
+    email: api-support@mentorplatform.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+  - url: https://api.mentorplatform.com/api
+    description: Production server
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login endpoint
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for external integrations
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - success
+        - error
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              example: "Invalid input data"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00.000Z"
+
+    SuccessResponse:
+      type: object
+      required:
+        - success
+        - data
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          description: Response data (varies by endpoint)
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00.000Z"
+
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - role
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        role:
+          type: string
+          enum: [MENTOR, STUDENT, ADMIN]
+          example: "MENTOR"
+        emailVerified:
+          type: boolean
+          example: true
+        mfaEnabled:
+          type: boolean
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        lastLoginAt:
+          type: string
+          format: date-time
+
+    UserProfile:
+      type: object
+      required:
+        - userId
+        - firstName
+        - lastName
+      properties:
+        userId:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        bio:
+          type: string
+          example: "Experienced software engineer with 10+ years in web development"
+        profileImageUrl:
+          type: string
+          format: uri
+          example: "https://example.com/images/profile.jpg"
+
+    MentorProfile:
+      allOf:
+        - $ref: '#/components/schemas/UserProfile'
+        - type: object
+          properties:
+            expertiseAreas:
+              type: array
+              items:
+                type: string
+              example: ["JavaScript", "React", "Node.js"]
+            yearsOfExperience:
+              type: integer
+              minimum: 0
+              example: 10
+            hourlyRate:
+              type: number
+              minimum: 0
+              example: 75.00
+            rating:
+              type: number
+              minimum: 0
+              maximum: 5
+              example: 4.8
+            totalSessions:
+              type: integer
+              minimum: 0
+              example: 150
+
+    StudentProfile:
+      allOf:
+        - $ref: '#/components/schemas/UserProfile'
+        - type: object
+          properties:
+            learningGoals:
+              type: array
+              items:
+                type: string
+              example: ["Learn React", "Improve JavaScript skills"]
+            interests:
+              type: array
+              items:
+                type: string
+              example: ["Web Development", "Mobile Apps"]
+            currentLevel:
+              type: string
+              enum: [BEGINNER, INTERMEDIATE, ADVANCED]
+              example: "INTERMEDIATE"
+
+    Session:
+      type: object
+      required:
+        - id
+        - mentorId
+        - title
+        - scheduledAt
+        - duration
+        - capacity
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        mentorId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: "Introduction to React Hooks"
+        description:
+          type: string
+          example: "Learn the basics of React Hooks and how to use them effectively"
+        expertiseAreas:
+          type: array
+          items:
+            type: string
+          example: ["React", "JavaScript"]
+        sessionType:
+          type: string
+          enum: [ONE_ON_ONE, GROUP, WORKSHOP]
+          example: "GROUP"
+        scheduledAt:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+          description: Duration in minutes
+          example: 60
+        capacity:
+          type: integer
+          minimum: 1
+          example: 10
+        currentRegistrations:
+          type: integer
+          minimum: 0
+          example: 7
+        status:
+          type: string
+          enum: [SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED]
+          example: "SCHEDULED"
+        meetingLink:
+          type: string
+          format: uri
+          example: "https://meet.example.com/session-123"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Message:
+      type: object
+      required:
+        - id
+        - fromUserId
+        - toUserId
+        - content
+        - type
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        fromUserId:
+          type: string
+          format: uuid
+        toUserId:
+          type: string
+          format: uuid
+        content:
+          type: string
+          example: "Hello, I have a question about the upcoming session"
+        type:
+          type: string
+          enum: [TEXT, FILE, IMAGE, SYSTEM]
+          example: "TEXT"
+        createdAt:
+          type: string
+          format: date-time
+        readAt:
+          type: string
+          format: date-time
+
+    Notification:
+      type: object
+      required:
+        - id
+        - userId
+        - type
+        - title
+        - message
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [SESSION_REMINDER, NEW_MESSAGE, SESSION_CANCELLED, RATING_REQUEST]
+          example: "SESSION_REMINDER"
+        title:
+          type: string
+          example: "Session Reminder"
+        message:
+          type: string
+          example: "Your session 'Introduction to React Hooks' starts in 30 minutes"
+        priority:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, URGENT]
+          example: "MEDIUM"
+        readAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    Webhook:
+      type: object
+      required:
+        - id
+        - url
+        - events
+        - active
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+          example: "https://your-app.com/webhooks/mentor-platform"
+        events:
+          type: array
+          items:
+            type: string
+            enum: [session.created, session.updated, session.cancelled, user.registered, message.sent]
+          example: ["session.created", "session.cancelled"]
+        active:
+          type: boolean
+          example: true
+        secret:
+          type: string
+          description: "Secret for webhook signature verification"
+          example: "whsec_1234567890abcdef"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "UNAUTHORIZED"
+              message: "Authentication required"
+            timestamp: "2024-01-01T00:00:00.000Z"
+
+    ForbiddenError:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "FORBIDDEN"
+              message: "Insufficient permissions"
+            timestamp: "2024-01-01T00:00:00.000Z"
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "NOT_FOUND"
+              message: "The requested resource was not found"
+            timestamp: "2024-01-01T00:00:00.000Z"
+
+    ValidationError:
+      description: Invalid input data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "VALIDATION_ERROR"
+              message: "Invalid input data"
+            timestamp: "2024-01-01T00:00:00.000Z"
+
+    RateLimitError:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: "RATE_LIMIT_EXCEEDED"
+              message: "Too many requests from this IP, please try again later"
+            timestamp: "2024-01-01T00:00:00.000Z"
+
+paths:
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health check endpoint
+      description: Check if the API is running and healthy
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              example:
+                success: true
+                data:
+                  status: "healthy"
+                  timestamp: "2024-01-01T00:00:00.000Z"
+                  uptime: 3600
+                timestamp: "2024-01-01T00:00:00.000Z"
+
+  # Authentication endpoints
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: Create a new user account with email verification
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - role
+                - firstName
+                - lastName
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                role:
+                  type: string
+                  enum: [MENTOR, STUDENT]
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and return JWT token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                mfaCode:
+                  type: string
+                  description: Required if MFA is enabled
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          accessToken:
+                            type: string
+                          refreshToken:
+                            type: string
+                          expiresIn:
+                            type: integer
+                          user:
+                            $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+
+  # User endpoints
+  /users/profile:
+    get:
+      tags:
+        - Users
+      summary: Get current user profile
+      description: Retrieve the authenticated user's profile information
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        oneOf:
+                          - $ref: '#/components/schemas/MentorProfile'
+                          - $ref: '#/components/schemas/StudentProfile'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    put:
+      tags:
+        - Users
+      summary: Update user profile
+      description: Update the authenticated user's profile information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                bio:
+                  type: string
+                expertiseAreas:
+                  type: array
+                  items:
+                    type: string
+                learningGoals:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  # Session endpoints
+  /sessions:
+    get:
+      tags:
+        - Sessions
+      summary: Get available sessions
+      description: Retrieve a list of available sessions with optional filtering
+      parameters:
+        - name: expertiseArea
+          in: query
+          schema:
+            type: string
+          description: Filter by expertise area
+        - name: sessionType
+          in: query
+          schema:
+            type: string
+            enum: [ONE_ON_ONE, GROUP, WORKSHOP]
+          description: Filter by session type
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of sessions to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of sessions to skip
+      responses:
+        '200':
+          description: Sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          sessions:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Session'
+                          total:
+                            type: integer
+                          limit:
+                            type: integer
+                          offset:
+                            type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Sessions
+      summary: Create a new session
+      description: Create a new mentoring session (mentors only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+                - scheduledAt
+                - duration
+                - capacity
+                - sessionType
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                expertiseAreas:
+                  type: array
+                  items:
+                    type: string
+                sessionType:
+                  type: string
+                  enum: [ONE_ON_ONE, GROUP, WORKSHOP]
+                scheduledAt:
+                  type: string
+                  format: date-time
+                duration:
+                  type: integer
+                  minimum: 15
+                  maximum: 480
+                capacity:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+      responses:
+        '201':
+          description: Session created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  # Webhook endpoints
+  /webhooks:
+    get:
+      tags:
+        - Webhooks
+      summary: List webhooks
+      description: Get all webhooks for the authenticated user/organization
+      responses:
+        '200':
+          description: Webhooks retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Webhook'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    post:
+      tags:
+        - Webhooks
+      summary: Create a webhook
+      description: Create a new webhook endpoint for receiving platform events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+                - events
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: The URL to send webhook events to
+                events:
+                  type: array
+                  items:
+                    type: string
+                    enum: [session.created, session.updated, session.cancelled, user.registered, message.sent]
+                  description: List of events to subscribe to
+                active:
+                  type: boolean
+                  default: true
+                  description: Whether the webhook is active
+      responses:
+        '201':
+          description: Webhook created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Webhook'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /webhooks/{webhookId}:
+    parameters:
+      - name: webhookId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: The webhook ID
+
+    get:
+      tags:
+        - Webhooks
+      summary: Get webhook details
+      description: Retrieve details of a specific webhook
+      responses:
+        '200':
+          description: Webhook retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Webhook'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - Webhooks
+      summary: Update webhook
+      description: Update an existing webhook configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                events:
+                  type: array
+                  items:
+                    type: string
+                    enum: [session.created, session.updated, session.cancelled, user.registered, message.sent]
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: Webhook updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Webhook'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Webhooks
+      summary: Delete webhook
+      description: Delete a webhook endpoint
+      responses:
+        '200':
+          description: Webhook deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+tags:
+  - name: System
+    description: System health and status endpoints
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Users
+    description: User profile management
+  - name: Sessions
+    description: Mentoring session management
+  - name: Webhooks
+    description: Webhook management for external integrations
+
+externalDocs:
+  description: Find more info about the Mentor Matching Platform
+  url: https://docs.mentorplatform.com

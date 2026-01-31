@@ -1,0 +1,290 @@
+version: '3.8'
+
+services:
+  # Database Services
+  postgres:
+    image: postgres:15-alpine
+    container_name: mentor-platform-postgres
+    environment:
+      POSTGRES_DB: mentor_platform
+      POSTGRES_USER: mentor_user
+      POSTGRES_PASSWORD: mentor_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - mentor-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mentor_user -d mentor_platform"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: mentor-platform-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mentor-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  elasticsearch:
+    image: elasticsearch:8.8.0
+    container_name: mentor-platform-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - mentor-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Application Services
+  api-gateway:
+    build:
+      context: .
+      dockerfile: packages/api-gateway/Dockerfile
+    container_name: mentor-platform-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - USER_SERVICE_URL=http://user-service:3002
+      - SESSION_SERVICE_URL=http://session-service:3003
+      - MATCHING_SERVICE_URL=http://matching-service:3004
+      - COMMUNICATION_SERVICE_URL=http://communication-service:3005
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3006
+      - ADMIN_SERVICE_URL=http://admin-service:3007
+      - ALLOWED_ORIGINS=http://localhost:3001,http://localhost:3000
+    depends_on:
+      - postgres
+      - redis
+      - elasticsearch
+    networks:
+      - mentor-network
+    volumes:
+      - ./packages/api-gateway:/app
+      - /app/node_modules
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: packages/auth-service/Dockerfile
+    container_name: mentor-platform-auth
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DATABASE_URL=postgresql://mentor_user:mentor_password@postgres:5432/mentor_platform
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - JWT_EXPIRES_IN=1h
+      - REFRESH_TOKEN_EXPIRES_IN=7d
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mentor-network
+    volumes:
+      - ./packages/auth-service:/app
+      - /app/node_modules
+
+  user-service:
+    build:
+      context: .
+      dockerfile: packages/user-service/Dockerfile
+    container_name: mentor-platform-user
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - DATABASE_URL=postgresql://mentor_user:mentor_password@postgres:5432/mentor_platform
+      - REDIS_URL=redis://redis:6379
+      - FILE_STORAGE_PATH=/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mentor-network
+    volumes:
+      - ./packages/user-service:/app
+      - /app/node_modules
+      - user_uploads:/app/uploads
+
+  session-service:
+    build:
+      context: .
+      dockerfile: packages/session-service/Dockerfile
+    container_name: mentor-platform-session
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - DATABASE_URL=postgresql://mentor_user:mentor_password@postgres:5432/mentor_platform
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mentor-network
+    volumes:
+      - ./packages/session-service:/app
+      - /app/node_modules
+
+  matching-service:
+    build:
+      context: .
+      dockerfile: packages/matching-service/Dockerfile
+    container_name: mentor-platform-matching
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=development
+      - PORT=3004
+      - DATABASE_URL=postgresql://mentor_user:mentor_password@postgres:5432/mentor_platform
+      - REDIS_URL=redis://redis:6379
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - mentor-network
+    volumes:
+      - ./packages/matching-service:/app
+      - /app/node_modules
+
+  communication-service:
+    build:
+      context: .
+      dockerfile: packages/communication-service/Dockerfile
+    container_name: mentor-platform-communication
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=development
+      - PORT=3005
+      - DATABASE_URL=postgresql://mentor_user:mentor_password@postgres:5432/mentor_platform
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mentor-network
+    volumes:
+      - ./packages/communication-service:/app
+      - /app/node_modules
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: packages/notification-service/Dockerfile
+    container_name: mentor-platform-notification
+    ports:
+      - "3006:3006"
+    environment:
+      - NODE_ENV=development
+      - PORT=3006
+      - DATABASE_URL=postgresql://mentor_user:mentor_password@postgres:5432/mentor_platform
+      - REDIS_URL=redis://redis:6379
+      - EMAIL_SERVICE_API_KEY=your-email-service-api-key
+      - SMS_SERVICE_API_KEY=your-sms-service-api-key
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mentor-network
+    volumes:
+      - ./packages/notification-service:/app
+      - /app/node_modules
+
+  admin-service:
+    build:
+      context: .
+      dockerfile: packages/admin-service/Dockerfile
+    container_name: mentor-platform-admin
+    ports:
+      - "3007:3007"
+    environment:
+      - NODE_ENV=development
+      - PORT=3007
+      - DATABASE_URL=postgresql://mentor_user:mentor_password@postgres:5432/mentor_platform
+      - REDIS_URL=redis://redis:6379
+      - ADMIN_SERVICE_PORT=3007
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mentor-network
+    volumes:
+      - ./packages/admin-service:/app
+      - /app/node_modules
+
+  # Web Application
+  web-app:
+    build:
+      context: .
+      dockerfile: apps/web-app/Dockerfile
+    container_name: mentor-platform-web
+    ports:
+      - "5173:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - REACT_APP_API_URL=http://localhost:3000/api
+      - REACT_APP_WS_URL=ws://localhost:3005
+    depends_on:
+      - api-gateway
+    networks:
+      - mentor-network
+    volumes:
+      - ./apps/web-app:/app
+      - /app/node_modules
+
+networks:
+  mentor-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  elasticsearch_data:
+  user_uploads:

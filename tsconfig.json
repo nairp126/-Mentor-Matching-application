@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["packages/shared/src/*"],
+      "@auth/*": ["packages/auth-service/src/*"],
+      "@user/*": ["packages/user-service/src/*"],
+      "@session/*": ["packages/session-service/src/*"],
+      "@matching/*": ["packages/matching-service/src/*"],
+      "@communication/*": ["packages/communication-service/src/*"],
+      "@notification/*": ["packages/notification-service/src/*"],
+      "@gateway/*": ["packages/api-gateway/src/*"]
+    },
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts", "apps", "src"],
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./packages/auth-service" },
+    { "path": "./packages/user-service" },
+    { "path": "./packages/session-service" },
+    { "path": "./packages/matching-service" },
+    { "path": "./packages/communication-service" },
+    { "path": "./packages/notification-service" },
+    { "path": "./packages/rating-service" },
+    { "path": "./packages/admin-service" },
+    { "path": "./packages/api-gateway" },
+    { "path": "./apps/web-app" }
+  ]
+}

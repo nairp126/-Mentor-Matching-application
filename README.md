@@ -1,53 +1,157 @@
-## Mentor Matching
+# Mentor Matching Platform
+>
+> **A Scalable, Cloud-Native Solution for Professional Mentorship Connections**
 
-**Mentor Matching** is a Java-based application designed to connect students with mentors. This application allows students to search for and connect with mentors, view details about scheduled sessions, and register for mentorship sessions. Mentors can manage their profiles and the sessions they offer.
+<div align="center">
 
-**Project Overview:**
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://reactjs.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://www.docker.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?logo=postgresql)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7.0-DC382D?logo=redis)](https://redis.io/)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-This application aims to streamline the mentor-mentee matching process. It provides a platform for students and mentors to connect, schedule sessions, and manage their interactions. The backend is built using Java and incorporates object-oriented programming principles to handle core functionalities.
+</div>
 
-**Project Files:**
+---
 
-*   `Mentor Matching.iml`: IntelliJ IDEA project file.
-*   `.idx/dev.nix`: Nix development environment configuration file.
-*   `src/DatabaseHandler.java`: Handles interactions with the application's database.
-*   `src/LoginSystem.java`: Manages user login and authentication processes.
-*   `src/MentorDashboard.java`: Provides the interface for mentors to manage their sessions and profiles.
-*   `src/Session.java`: Defines the `Session` object and its attributes.
-*   `src/StudentDashbaord.java`: Provides the interface for students to manage their sessions and profiles.
-*   `src/User.java`: Defines the `User` object and its attributes.
+## 🚀 The Elevator Pitch
 
-**Key Features:**
+The **Mentor Matching Platform** modernizes professional development by replacing legacy desktop systems with a high-performance **Microservices Architecture**. It enables seamless connections between Mentors and Students through **Real-time Video/Chat**, **Intelligent Matching Algorithms**, and **Secure Scheduling**. Built for scale, it handles thousands of concurrent sessions with robust Observability and RBAC security.
 
-*   **User Management:** User registration, authentication, and profile management for both students and mentors.
-*   **Session Management:** Creation, viewing, and registration of mentorship sessions.
-*   **CRUD Operations:** Utilization of CRUD (Create, Read, Update, Delete) operations for user and session data.
-*   **Dashboards:** Separate dashboards for students and mentors to manage their sessions and user information.
-*   **Backend:** Java-based backend with object-oriented principles to manage `Session` and `User` objects.
-*   **Database Integration:** Integration with a database (likely SQL) to persistently store user profiles, mentor details, and session information.
-*   **Database Handling:** Classes to manage the interaction between the application and the database.
+---
 
-## Development Environment Setup
+## 🏗️ Visual Architecture
+
+The system uses a **Backend-for-Frontend (BFF)** pattern where a central **API Gateway** manages traffic to specialized microservices, ensuring a decoupled and resilient infrastructure.
+
+```mermaid
+graph TD
+    User[Web Client / User] -->|HTTPS| Gateway[API Gateway :3000]
     
-1.  **Install Java:** Ensure you have the Java Development Kit (JDK) installed on your system.
-2.  **Install a Database:** Set up a database server (e.g., MySQL, PostgreSQL) and create a database for the application.
-3. **IntelliJ IDEA:** This project is structured for IntelliJ IDEA. Install IntelliJ IDEA if you plan on making changes to this project.
-4.  **Nix:** This project uses Nix, make sure you have installed nix in your system.
+    subgraph "Backend Services"
+        Gateway -->|Auth Check| Auth[Auth Service :3001]
+        Gateway -->|User Data| UserSvc[User Service :3002]
+        Gateway -->|Sessions| Session[Session Service :3003]
+        Gateway -->|Matchmaking| Match[Matching Service :3004]
+        Gateway -->|WS/Chat| Comm[Communication Service :3005]
+        Gateway -->|Alerts| Notify[Notification Service :3006]
+        Gateway -->|Reviews| Rate[Rating Service :3007]
+        Gateway -->|Sys Admin| Admin[Admin Service :3008]
+    end
 
-**Running the Application:**
+    subgraph "Data Persistence"
+        Auth & UserSvc & Session & Comm -->|Read/Write| DB[(PostgreSQL)]
+        Auth & Session -->|Cache/PubSub| Redis[(Redis)]
+        Match -->|Index/Search| Elastic[(Elasticsearch)]
+    end
+```
 
-1.  Ensure the database server is running.
-2.  Compile the Java source code.
-3.  Run the main application class (e.g., using `java Main`).
+### Modular Design
 
-## Future Scope and Potential Improvements
+This project is a **Turborepo Monorepo**, dividing the codebase into:
 
-The Mentor Matching application has significant potential for future growth and enhancement. Here are some ideas for potential improvements:
+- **Apps**: Consumer-facing frontends (React).
+- **Packages**: Independent backend microservices and shared logic libraries.
+- **Infrastructure**: Docker orchestration and Database schemas.
 
-*   **Real-Time Chat:** Implement a real-time chat feature to allow mentors and students to communicate directly within the application.
-*   **Improved Search Algorithm:** Enhance the search algorithm to provide more accurate and relevant mentor recommendations based on student preferences and needs.
-*   **User Ratings and Reviews:** Add a system for users to rate and review their mentors, helping to build trust and improve the quality of mentorship.
-*   **AI for Smart Matching:** Incorporate AI to analyze user profiles and suggest the best mentor-student matches based on skills, interests, and goals.
-*   **Notifications:** Implement a notification system to alert users about new sessions, messages, and other important updates.
-*   **Resource Library:** Create a resource library with helpful articles, videos, and tools for both mentors and students.
-*   **Calendar Integration:** Integrate with user calendars to make scheduling and managing sessions easier.
+---
+
+## ✨ Key Features
+
+- **🔐 Enterprise Security**: Role-Based Access Control (RBAC) and Multi-Factor Authentication (MFA).
+- **📅 Session Management**: Availability blocks, recurring sessions, and waitlist queues.
+- **💬 Real-Time Interaction**: Integrated WebRTC signaling and Socket.IO chat rooms.
+- **🧠 Smart Matching**: Elasticsearch-powered recommendations connecting students to the right experts.
+- **📢 Multi-Channel Notifications**: Centralized dispatch for Email, SMS, and Push alerts.
+- **📈 Observability**: Pre-configured stacks for Prometheus, Grafana, and Loki logging.
+
+---
+
+## 📂 Project Structure
+
+```bash
+root/
+├── apps/
+│   └── web-app/             # 📱 Main React Client (Vite + MUI + Redux)
+├── packages/
+│   ├── api-gateway/         # 🚪 BFF Entry Point & Rate Limiter
+│   ├── auth-service/        # 🛡️ Identity, JWT, & MFA Provider
+│   ├── user-service/        # 👤 Profile & Availability Management
+│   ├── session-service/     # 📅 Booking & Scheduling Engine
+│   ├── matching-service/    # 🧠 Elasticsearch Recommendation Engine
+│   ├── communication-service/ # 💬 Socket.IO & WebRTC Signaling
+│   ├── notification-service/ # 🔔 Email/SMS Dispatcher
+│   ├── rating-service/      # ⭐ Feedback & Analytics
+│   ├── admin-service/       # 👮 Back-office Management
+│   └── shared/              # 📦 Common Types, Middleware & Utils
+├── database/                # 💾 SQL Migrations & Seed Data
+├── monitoring/              # 📊 Prometheus, Grafana & Loki Configs
+└── scripts/                 # 🛠️ DevOps Automation (Deploy/Backup)
+```
+
+> **Note**: Each folder contains its own detailed `README.md` explaining its specific responsibilities and usage.
+
+---
+
+## 🏎️ Getting Started
+
+### Prerequisites
+
+- **Node.js** v18+
+- **Docker Desktop** (running)
+- **NPM** v9+
+
+### Quick Start
+
+Clone the repo and launch the entire stack with one command:
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/organization/mentor-matching-platform.git
+cd mentor-matching-platform
+
+# 2. Install dependencies (Root)
+npm install
+
+# 3. Setup local environment variables
+cp .env.example .env
+
+# 4. Launch Infrastructure & Services (Docker)
+npm run docker:up
+
+# The Web App will be live at: http://localhost:3001
+# The API Gateway will be live at: http://localhost:3000
+```
+
+<details>
+<summary><strong>Troubleshooting? Click here</strong></summary>
+
+- **Ports**: Ensure ports `3000-3008`, `5432` (Postgres), and `6379` (Redis) are free.
+- **Seed Data**: If the DB is empty, run `npm run db:seed` to populate test users.
+- **Logs**: View service logs with `docker-compose logs -f [service_name]`.
+
+</details>
+
+---
+
+## ☁️ Deployment
+
+The project uses a containerized deployment strategy managed by **Docker Compose**.
+
+- **Deployment Script**: `scripts/deploy.sh` handles building, migrating, and restarting services.
+- **Environments**: Supports `development`, `staging`, and `production` via environment variable injection.
+
+```bash
+# Deploy to Staging
+./scripts/deploy.sh staging
+```
+
+For detailed infrastructure diagrams, see [docs/04_DEPLOYMENT_AND_INFRA.md](docs/04_DEPLOYMENT_AND_INFRA.md).
+
+---
+
+<div align="center">
+    <sub>Built with ❤️ by Me</sub>
+</div>

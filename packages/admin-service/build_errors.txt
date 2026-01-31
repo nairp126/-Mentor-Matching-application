@@ -1,0 +1,5 @@
+﻿src/services/auditService.ts(101,20): error TS2552: Cannot find name 'orderBy'. Did you mean 'order'?
+src/services/auditService.ts(220,20): error TS2552: Cannot find name 'orderBy'. Did you mean 'order'?
+src/services/auditService.ts(370,20): error TS2552: Cannot find name 'orderBy'. Did you mean 'order'?
+src/services/auditService.ts(501,23): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ created_at: string; event_type: string; severity: string; }'.
+src/services/systemMetricsService.ts(358,26): error TS2345: Argument of type 'string' is not assignable to parameter of type 'Date'.
