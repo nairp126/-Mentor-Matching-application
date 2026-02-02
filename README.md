@@ -22,6 +22,28 @@ The **Mentor Matching Platform** modernizes professional development by replacin
 
 ---
 
+## ⚠️ Current Development Status & Roadmap
+
+> **Status: Beta / Work-in-Progress** 🚧
+
+This project is currently in a **Beta** state. While the core microservices architecture and frontend application are structurally complete, several critical features and security enforcements are currently mocked or pending implementation.
+
+**What works:**
+
+* ✅ **Authentication**: Full login/register flow with MFA and Redis session management.
+* ✅ **Web Application**: Complete frontend UI with 25+ pages and established routing.
+* ✅ **Infrastructure**: API Gateway, Postgres, and Redis service definitions are stable.
+
+**Known Gaps (Under Construction):**
+
+* ⚠️ **Security Enforcements**: Privacy settings and deep session ownership checks are currently stubbed (marked as `TODO`).
+* ⚠️ **Push Notifications**: Logic is defined but implementation (e.g., FCM integration) is pending.
+* ⚠️ **Advanced Logic**: Complex matching algorithms and post-promotion workflows are currently using placeholder logic.
+
+*For a detailed technical breakdown of missing features and a step-by-step implementation guide, please refer to [IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md).*
+
+---
+
 ## 🏗️ Visual Architecture
 
 The system uses a **Backend-for-Frontend (BFF)** pattern where a central **API Gateway** manages traffic to specialized microservices, ensuring a decoupled and resilient infrastructure.
@@ -52,20 +74,20 @@ graph TD
 
 This project is a **Turborepo Monorepo**, dividing the codebase into:
 
-- **Apps**: Consumer-facing frontends (React).
-- **Packages**: Independent backend microservices and shared logic libraries.
-- **Infrastructure**: Docker orchestration and Database schemas.
+* **Apps**: Consumer-facing frontends (React).
+* **Packages**: Independent backend microservices and shared logic libraries.
+* **Infrastructure**: Docker orchestration and Database schemas.
 
 ---
 
 ## ✨ Key Features
 
-- **🔐 Enterprise Security**: Role-Based Access Control (RBAC) and Multi-Factor Authentication (MFA).
-- **📅 Session Management**: Availability blocks, recurring sessions, and waitlist queues.
-- **💬 Real-Time Interaction**: Integrated WebRTC signaling and Socket.IO chat rooms.
-- **🧠 Smart Matching**: Elasticsearch-powered recommendations connecting students to the right experts.
-- **📢 Multi-Channel Notifications**: Centralized dispatch for Email, SMS, and Push alerts.
-- **📈 Observability**: Pre-configured stacks for Prometheus, Grafana, and Loki logging.
+* **🔐 Enterprise Security**: Role-Based Access Control (RBAC) and Multi-Factor Authentication (MFA).
+* **📅 Session Management**: Availability blocks, recurring sessions, and waitlist queues.
+* **💬 Real-Time Interaction**: Integrated WebRTC signaling and Socket.IO chat rooms.
+* **🧠 Smart Matching**: Elasticsearch-powered recommendations connecting students to the right experts.
+* **📢 Multi-Channel Notifications**: Centralized dispatch for Email, SMS, and Push alerts.
+* **📈 Observability**: Pre-configured stacks for Prometheus, Grafana, and Loki logging.
 
 ---
 
@@ -99,9 +121,9 @@ root/
 
 ### Prerequisites
 
-- **Node.js** v18+
-- **Docker Desktop** (running)
-- **NPM** v9+
+* **Node.js** v18+
+* **Docker Desktop** (running)
+* **NPM** v9+
 
 ### Quick Start
 
@@ -128,9 +150,9 @@ npm run docker:up
 <details>
 <summary><strong>Troubleshooting? Click here</strong></summary>
 
-- **Ports**: Ensure ports `3000-3008`, `5432` (Postgres), and `6379` (Redis) are free.
-- **Seed Data**: If the DB is empty, run `npm run db:seed` to populate test users.
-- **Logs**: View service logs with `docker-compose logs -f [service_name]`.
+* **Ports**: Ensure ports `3000-3008`, `5432` (Postgres), and `6379` (Redis) are free.
+* **Seed Data**: If the DB is empty, run `npm run db:seed` to populate test users.
+* **Logs**: View service logs with `docker-compose logs -f [service_name]`.
 
 </details>
 
@@ -140,8 +162,8 @@ npm run docker:up
 
 The project uses a containerized deployment strategy managed by **Docker Compose**.
 
-- **Deployment Script**: `scripts/deploy.sh` handles building, migrating, and restarting services.
-- **Environments**: Supports `development`, `staging`, and `production` via environment variable injection.
+* **Deployment Script**: `scripts/deploy.sh` handles building, migrating, and restarting services.
+* **Environments**: Supports `development`, `staging`, and `production` via environment variable injection.
 
 ```bash
 # Deploy to Staging
@@ -149,6 +171,22 @@ The project uses a containerized deployment strategy managed by **Docker Compose
 ```
 
 For detailed infrastructure diagrams, see [docs/04_DEPLOYMENT_AND_INFRA.md](docs/04_DEPLOYMENT_AND_INFRA.md).
+
+---
+
+## 🤝 Contributing
+
+We love contributions! Whether it's a bug fix, new feature, or documentation update, we welcome your help.
+
+Please read our [Contributing Guidelines](CONTRIBUTING.md) to get started. It covers:
+
+* How to set up the dev environment
+* Pull Request process
+* Coding standards
+
+## ❤️ Code of Conduct
+
+In the interest of fostering an open and welcoming environment, we pledge to making participation in our project and our community a harassment-free experience for everyone. Please read our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ---
 

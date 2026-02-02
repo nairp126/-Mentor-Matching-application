@@ -80,6 +80,8 @@ jspm_packages/
 # IDE files
 .vscode/
 .idea/
+.idx/
+.kiro/
 *.swp
 *.swo
 *~
